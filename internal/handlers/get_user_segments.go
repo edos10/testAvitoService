@@ -25,7 +25,7 @@ func GetUserSegments(c *gin.Context) {
 		SELECT ids.segment_name
 		FROM users_segments us
 		INNER JOIN id_name_segments ids ON us.segment_id = ids.segment_id
-		WHERE us.user_id = 1
+		WHERE us.user_id = $1
 	`
 	data, errGet := db.Query(query, requestData.UserID)
 	if errGet != nil {
