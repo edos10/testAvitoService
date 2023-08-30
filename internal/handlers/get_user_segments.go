@@ -4,9 +4,11 @@ import (
 	"github.com/edos10/test_avito_service/internal/databases"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
 
 func GetUserSegments(c *gin.Context) {
+	timeToDb := time.Now()
 	var requestData struct {
 		UserID int `json:"user_id"`
 	}
@@ -25,9 +27,9 @@ func GetUserSegments(c *gin.Context) {
 		SELECT ids.segment_name
 		FROM users_segments us
 		INNER JOIN id_name_segments ids ON us.segment_id = ids.segment_id
-		WHERE us.user_id = $1
+		WHERE us.user_id = $1 AND us.endtime > $2
 	`
-	data, errGet := db.Query(query, requestData.UserID)
+	data, errGet := db.Query(query, requestData.UserID, timeToDb)
 	if errGet != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse user segments"})
 		return

@@ -1,2 +1,5 @@
 .env
 .idea
+report.csv
+test_avito_service.exe
+delete.sql
