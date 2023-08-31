@@ -16,6 +16,6 @@ func main() {
 	r.DELETE("/delete_segment", handlers.DeleteSegment)
 	r.POST("/change_segments", handlers.ChangesUserSegments)
 	r.GET("/get_user_segments", handlers.GetUserSegments)
-	r.GET("/csv", handlers.GenerateCSV)
+	r.GET("/get_report_csv", handlers.GenerateCSV)
 	log.Fatal(r.Run())
 }

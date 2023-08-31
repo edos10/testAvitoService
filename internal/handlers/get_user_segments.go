@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/edos10/test_avito_service/internal/databases"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -29,9 +30,10 @@ func GetUserSegments(c *gin.Context) {
 		INNER JOIN id_name_segments ids ON us.segment_id = ids.segment_id
 		WHERE us.user_id = $1 AND us.endtime > $2
 	`
+	fmt.Println(db.Stats(), "OK")
 	data, errGet := db.Query(query, requestData.UserID, timeToDb)
 	if errGet != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse user segments"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errGet})
 		return
 	}
 	defer data.Close()

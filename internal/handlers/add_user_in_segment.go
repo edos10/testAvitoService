@@ -34,7 +34,7 @@ func ChangesUserSegments(g *gin.Context) {
 
 	curTransaction, err := db.Begin()
 	if err != nil {
-		g.JSON(http.StatusInternalServerError, gin.H{"error": "error in transaction"})
+		g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 	defer curTransaction.Rollback()
@@ -79,7 +79,7 @@ func ChangesUserSegments(g *gin.Context) {
 					($5, $6, $7, $8)
 		`
 		if _, err := curTransaction.Exec(queryAddHistory,
-			requestData.UserID, segmentID, "add", time.Now(),
+			requestData.UserID, segmentID, "add", time.Now().Format("2006-01-02 15:04:05"),
 			requestData.UserID, segmentID, "remove", timeToDelete); err != nil {
 
 			g.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add segment"})

@@ -34,6 +34,24 @@ func DeleteSegment(c *gin.Context) {
 		}
 		return
 	}
+	// проверочка на то, что сегмент не был добавлен автоматически некоторым пользователям
+	queryForCheckAutomaticSegment := `
+		SELECT ush.user_id
+		FROM user_segment_history ush
+		JOIN id_name_segments ins ON ush.segment_id = ins.segment_id
+		WHERE ush.timestamp = 'infinity'
+	`
+	var Id int64
+	errCheck := db.QueryRow(queryForCheckAutomaticSegment).Scan(&Id)
+	if errCheck == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": `segment already added automatically, 
+		it isn't possible to delete it because there are users assigned to this segment permanently`})
+		return
+	} else if errCheck != sql.ErrNoRows {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error in query process"})
+		return
+	}
+
 	transaction, errTransaction := db.Begin()
 	if errTransaction != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error in transaction process"})
