@@ -11,7 +11,7 @@ import (
 )
 
 func GetAllUserID(db *sql.DB) ([]int64, error) {
-	query := "SELECT DISTINCT user_id FROM users_segments"
+	query := "SELECT user_id FROM users"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -57,6 +57,11 @@ func CreateSegment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "invalid data, try please again"})
 		return
 	}
+	if requestData.SegmentName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"Error": `invalid data, doesn't exit field "segment_name" or it's empty`})
+		return
+	}
+	fmt.Println(requestData)
 	if !(0 <= requestData.Percents && requestData.Percents <= 100) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON field - percents, please, make this field the number from 0 to 100 including"})
 		return
@@ -64,11 +69,12 @@ func CreateSegment(c *gin.Context) {
 	var existID int64
 	queryCheck := "SELECT segment_id FROM id_name_segments WHERE segment_name = $1"
 	errCheck := db.QueryRow(queryCheck, requestData.SegmentName).Scan(&existID)
+	fmt.Println(errCheck)
 	if errCheck == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "segment already exists"})
 		return
 	} else if errCheck != sql.ErrNoRows {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error in query process"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errCheck})
 		return
 	}
 
@@ -83,7 +89,7 @@ func CreateSegment(c *gin.Context) {
 	queryInsert := "INSERT INTO id_name_segments (segment_name) VALUES ($1) RETURNING segment_id"
 	errIns := transaction.QueryRow(queryInsert, requestData.SegmentName).Scan(&newSegmentID)
 	if errIns != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to insert segment"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errIns})
 		return
 	}
 

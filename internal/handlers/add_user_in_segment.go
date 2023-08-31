@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/edos10/test_avito_service/internal/databases"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -32,20 +33,39 @@ func ChangesUserSegments(g *gin.Context) {
 	}
 	defer db.Close()
 
+	// хотим до транзакции проверить наличие id пользователя и на всякий случай вставить в таблицу users
+	flagInsertUser := false
+	queryCheckUserId := "SELECT user_id FROM users WHERE user_id = $1"
+	if err := db.QueryRow(queryCheckUserId, requestData.UserID).Scan(nil); err != nil {
+		if err == sql.ErrNoRows {
+			flagInsertUser = true
+		} else {
+			g.JSON(http.StatusBadRequest, gin.H{"error": err})
+			return
+		}
+	}
 	curTransaction, err := db.Begin()
 	if err != nil {
 		g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 	defer curTransaction.Rollback()
+	fmt.Println(flagInsertUser)
+	if flagInsertUser {
+		queryInsertUser := "INSERT INTO users (user_id) VALUES ($1)"
+		if _, err := curTransaction.Exec(queryInsertUser, requestData.UserID); err != nil {
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+	}
 
 	for _, segmentInfo := range requestData.AddSegments {
 		segment := segmentInfo.SegmentName
 		timeToDelete := segmentInfo.DeleteTime
 
-		queryCheck := "SELECT segment_id FROM id_name_segments WHERE segment_name = $1"
+		queryCheckSegment := "SELECT segment_id FROM id_name_segments WHERE segment_name = $1"
 		var segmentID int
-		if err := db.QueryRow(queryCheck, segment).Scan(&segmentID); err != nil {
+		if err := db.QueryRow(queryCheckSegment, segment).Scan(&segmentID); err != nil {
 			if err == sql.ErrNoRows {
 				continue
 			} else {
@@ -74,13 +94,13 @@ func ChangesUserSegments(g *gin.Context) {
 		}
 
 		queryAddHistory := `INSERT INTO user_segment_history
-					(user_id, segment_id, operation, timestamp) VALUES 
+					(user_id, segment_name, operation, timestamp) VALUES 
 					($1, $2, $3, $4),
 					($5, $6, $7, $8)
 		`
 		if _, err := curTransaction.Exec(queryAddHistory,
-			requestData.UserID, segmentID, "add", time.Now().Format("2006-01-02 15:04:05"),
-			requestData.UserID, segmentID, "remove", timeToDelete); err != nil {
+			requestData.UserID, segmentInfo.SegmentName, "add", time.Now().Format("2006-01-02 15:04:05"),
+			requestData.UserID, segmentInfo.SegmentName, "remove", timeToDelete); err != nil {
 
 			g.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add segment"})
 			return

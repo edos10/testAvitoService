@@ -8,5 +8,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o build/test_avito_
 FROM alpine
 RUN apk add --no-cache ca-certificates && update-ca-certificates
 COPY --from=builder /go/src/github.com/edos10/test_avito_service/build/test_avito_service /usr/bin/test_avito_service
-EXPOSE 8080 8080
 ENTRYPOINT ["/usr/bin/test_avito_service"]
