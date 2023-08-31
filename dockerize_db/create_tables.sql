@@ -16,7 +16,7 @@ CREATE TABLE public.id_name_segments (
 CREATE TABLE public.user_segment_history (
                                       id            SERIAL PRIMARY KEY,
                                       user_id       BIGINT,
-                                      segment_id    INT,
+                                      segment_name  TEXT,
                                       operation     VARCHAR(10),
                                       timestamp     TIMESTAMP
 );

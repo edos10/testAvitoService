@@ -33,9 +33,8 @@ func GenerateCSV(c *gin.Context) {
 	dateStart := time.Date(requestData.Year, time.Month(requestData.Month), 1, 0, 0, 0, 0, time.Local)
 	dateEnd := dateStart.AddDate(0, 1, 0).Add(-time.Second)
 	query := `
-		SELECT ush.user_id, ins.segment_name, ush.operation, ush.timestamp
+		SELECT ush.user_id, ush.segment_name, ush.operation, ush.timestamp
 		FROM user_segment_history ush
-		JOIN id_name_segments ins ON ush.segment_id = ins.segment_id
 		WHERE ush.timestamp >= $1 AND ush.timestamp <= $2
 		AND ush.user_id IN $3
 	`

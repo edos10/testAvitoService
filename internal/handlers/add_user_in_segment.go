@@ -77,7 +77,7 @@ func ChangesUserSegments(g *gin.Context) {
 		queryCheckUserSegment := "SELECT COUNT(*) FROM users_segments WHERE user_id = $1 AND segment_id = $2"
 		var count int
 		if err := db.QueryRow(queryCheckUserSegment, requestData.UserID, segmentID).Scan(&count); err != nil {
-			g.JSON(http.StatusInternalServerError, gin.H{"error": "error in query process"})
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 		if count > 0 || timeToDelete.Sub(time.Now()) <= 0 {
@@ -89,7 +89,7 @@ func ChangesUserSegments(g *gin.Context) {
 					 VALUES ($1, (SELECT segment_id FROM id_name_segments
 					 WHERE segment_name = $2), $3)`
 		if _, err := curTransaction.Exec(queryAddUsersSegments, requestData.UserID, segment, timeToDelete); err != nil {
-			g.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add segment"})
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 
@@ -102,7 +102,7 @@ func ChangesUserSegments(g *gin.Context) {
 			requestData.UserID, segmentInfo.SegmentName, "add", time.Now().Format("2006-01-02 15:04:05"),
 			requestData.UserID, segmentInfo.SegmentName, "remove", timeToDelete); err != nil {
 
-			g.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add segment"})
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 	}
@@ -110,7 +110,7 @@ func ChangesUserSegments(g *gin.Context) {
 	for _, segment := range requestData.RemoveSegments {
 		queryDel := "DELETE FROM users_segments WHERE user_id = $1 AND segment_id = (SELECT segment_id FROM id_name_segments WHERE segment_name = $2)"
 		if _, err := curTransaction.Exec(queryDel, requestData.UserID, segment); err != nil {
-			g.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove segment"})
+			g.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 	}
